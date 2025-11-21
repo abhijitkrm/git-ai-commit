@@ -23,6 +23,9 @@ Supports OpenAI • Anthropic Claude • Google Gemini
 - 🤖 **AI-Powered**: Generate meaningful branch names and commit messages using state-of-the-art LLMs
 - 🔄 **Complete Workflow**: Automates branch creation, staging, committing, and pushing
 - 🎯 **Multiple Providers**: Support for OpenAI, Anthropic, and Google Gemini
+- ✨ **Interactive Setup**: First-run wizard guides you through provider selection and API key configuration
+- ⚙️ **Configuration System**: Set defaults for provider, verbose mode, and dry-run behavior
+- 🔑 **Smart API Key Management**: Automatic validation and storage of API keys
 - 🛡️ **Safe**: Dry-run mode to preview changes before execution
 - 📝 **Conventional Commits**: Generates commit messages following conventional commit standards
 - 🎨 **Smart Branch Names**: Creates kebab-case branch names with conventional prefixes
@@ -39,12 +42,16 @@ npm run build
 # Install globally (optional)
 npm install -g .
 
-# Set your API key
-export OPENAI_API_KEY=your-api-key-here
-
-# Run
+# Run (it will guide you through setup)
 git-ai-commit
 ```
+
+**NEW**: On your first run, git-ai-commit will automatically:
+- Ask you to select your preferred LLM provider
+- Prompt you to enter your API key
+- Save the configuration for future use
+
+No manual setup required!
 
 ## Installation
 
@@ -82,7 +89,18 @@ git-ai-commit
    npm link
    ```
 
-5. **Set up your API keys**:
+5. **Set up your API keys** (optional - can be done interactively on first run):
+
+   **Option A: Interactive Setup (Recommended)**
+
+   Just run `git-ai-commit` and follow the prompts! The tool will:
+   - Ask you to select a provider
+   - Prompt for your API key
+   - Automatically save it to your shell configuration
+
+   **Option B: Manual Setup**
+
+   If you prefer to set up manually, add the API key to your shell configuration:
    ```bash
    # For OpenAI
    export OPENAI_API_KEY=sk-...
@@ -96,7 +114,7 @@ git-ai-commit
    export GOOGLE_API_KEY=...
    ```
 
-   Add these to your shell configuration file (`~/.bashrc`, `~/.zshrc`) to make them permanent:
+   Add these to your shell configuration file (`~/.bashrc`, `~/.zshrc`):
    ```bash
    echo 'export OPENAI_API_KEY=your-key' >> ~/.zshrc
    source ~/.zshrc

@@ -20,70 +20,99 @@ The installer will:
 - Build TypeScript
 - Install globally
 
-### Step 2: Set API Key
+### Step 2: First Run (Interactive Setup)
 
-Choose ONE provider and set its API key:
+**NEW**: No manual setup required! Just run the tool and it will guide you.
 
-**Option A: OpenAI (Recommended for beginners)**
-```bash
-export OPENAI_API_KEY=sk-your-key-here
-```
-
-**Option B: Anthropic**
-```bash
-export ANTHROPIC_API_KEY=sk-ant-your-key-here
-```
-
-**Option C: Google Gemini**
-```bash
-export GEMINI_API_KEY=your-key-here
-```
-
-Make it permanent by adding to your shell config:
-```bash
-echo 'export OPENAI_API_KEY=sk-your-key' >> ~/.zshrc
-source ~/.zshrc
-```
-
-### Step 3: Set Default Provider (Optional but Recommended)
-
-**NEW**: Skip passing `--provider` every time!
-
-```bash
-# If you prefer Anthropic
-git-ai-commit config --set-provider anthropic
-
-# If you prefer Gemini
-git-ai-commit config --set-provider gemini
-
-# If you prefer OpenAI (it's the default, so this is optional)
-git-ai-commit config --set-provider openai
-```
-
-Now you can just run `git-ai-commit` without any flags!
-
-## First Run (1 minute)
-
-### 1. Navigate to a git repository
+On your first run, git-ai-commit will:
+1. Ask you to select your preferred LLM provider
+2. Prompt you to enter your API key
+3. Automatically save the API key to your shell configuration
+4. Set the provider as your default
 
 ```bash
 cd your-project
+
+# First run - interactive setup
+git-ai-commit
+
+# Output:
+# 🤖 Welcome to git-ai-commit!
+#
+# Please select your preferred LLM provider:
+#
+#   1. OpenAI (GPT-4)
+#   2. Anthropic (Claude)
+#   3. Google Gemini
+#
+# Enter your choice (1-3): 2
+#
+# ✓ Set anthropic as default provider
+#
+# 🔑 Anthropic API key not found.
+#
+# Get your API key from: https://console.anthropic.com/
+#
+# Enter your Anthropic API key: sk-ant-your-key-here
+#
+# ✓ API key saved to /Users/you/.zshrc
+# ✓ API key set for current session
 ```
 
-### 2. Make some changes
+**Alternative: Manual Setup (Optional)**
+
+If you prefer to set up manually:
 
 ```bash
-# Edit a file
+# Set API key
+export OPENAI_API_KEY=sk-your-key-here
+# or
+export ANTHROPIC_API_KEY=sk-ant-your-key-here
+# or
+export GEMINI_API_KEY=your-key-here
+
+# Set default provider
+git-ai-commit config --set-provider anthropic
+```
+
+## Using git-ai-commit (1 minute)
+
+After the interactive setup, you're ready to use git-ai-commit!
+
+### 1. Make some changes
+
+```bash
+# Edit a file in your git repository
 echo "console.log('hello');" >> index.js
 ```
 
-### 3. Run git-ai-commit
+### 2. Run git-ai-commit
+
+```bash
+git-ai-commit
+```
+
+Expected output:
+```
+📝 Generated branch name: feature-add-hello-log
+✓ Created and checked out branch: feature-add-hello-log
+✓ Staged all changes
+💬 Generated commit message:
+  "feat: add hello world console log"
+✓ Created commit
+✓ Pushed to origin/feature-add-hello-log
+✨ All done! Your changes have been committed and pushed.
+```
+
+### 3. Preview with dry-run (optional)
+
+To see what would be generated without committing:
 
 ```bash
 git-ai-commit --dry-run
 ```
 
-Expected output:
+Output:
 ```
 📝 Generated branch name: feature-add-hello-log
 [DRY RUN] Would execute:
@@ -94,26 +123,6 @@ Expected output:
   git commit -m "feat: add hello world console log"
   git push origin feature-add-hello-log
 [DRY RUN] No changes were made to the repository.
-```
-
-### 4. Commit for real
-
-If you like the generated names, run without `--dry-run`:
-
-```bash
-git-ai-commit
-```
-
-Output:
-```
-📝 Generated branch name: feature-add-hello-log
-✓ Created and checked out branch: feature-add-hello-log
-✓ Staged all changes
-💬 Generated commit message:
-  "feat: add hello world console log"
-✓ Created commit
-✓ Pushed to origin/feature-add-hello-log
-✨ All done! Your changes have been committed and pushed.
 ```
 
 ## Common Commands

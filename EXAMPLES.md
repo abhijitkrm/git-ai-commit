@@ -13,6 +13,51 @@ Real-world usage examples and scenarios for git-ai-commit.
 
 ## Configuration Examples
 
+### Example 0: First-Time Interactive Setup
+
+**Scenario**: You just installed git-ai-commit and running it for the first time.
+
+```bash
+# First run - no API key set, no provider configured
+$ git-ai-commit
+
+🤖 Welcome to git-ai-commit!
+
+Please select your preferred LLM provider:
+
+  1. OpenAI (GPT-4)
+  2. Anthropic (Claude)
+  3. Google Gemini
+
+Enter your choice (1-3): 2
+
+✓ Set anthropic as default provider
+
+🔑 Anthropic API key not found.
+
+Get your API key from: https://console.anthropic.com/
+
+Enter your Anthropic API key: sk-ant-api03-xyz...
+
+✓ API key saved to /Users/you/.zshrc
+✓ API key set for current session
+
+💡 For future terminal sessions, run: source /Users/you/.zshrc
+
+# Now the tool proceeds with the normal workflow
+📝 Generated branch name: feature-add-user-auth
+✓ Created and checked out branch: feature-add-user-auth
+✓ Staged all changes
+💬 Generated commit message:
+  "feat: implement user authentication system"
+✓ Created commit
+✓ Pushed to origin/feature-add-user-auth
+
+✨ All done! Your changes have been committed and pushed.
+
+# Future runs will use the saved configuration automatically!
+```
+
 ### Example 1: Set Default Provider
 
 **Scenario**: You prefer Anthropic and don't want to type `--provider anthropic` every time.
