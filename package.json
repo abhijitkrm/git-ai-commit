@@ -1,0 +1,55 @@
+{
+  "name": "git-ai-commit",
+  "version": "1.1.0",
+  "description": "Automate git workflow with AI-generated branch names and commit messages",
+  "main": "dist/index.js",
+  "bin": {
+    "git-ai-commit": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "git",
+    "ai",
+    "commit",
+    "openai",
+    "anthropic",
+    "gemini",
+    "cli",
+    "automation",
+    "llm",
+    "gpt",
+    "claude",
+    "conventional-commits",
+    "git-workflow"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/git-ai-commit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/git-ai-commit/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/git-ai-commit#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "@google/generative-ai": "^0.2.0",
+    "commander": "^11.1.0",
+    "openai": "^4.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
