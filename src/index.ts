@@ -54,6 +54,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as readline from 'readline';
 
 // ============================================================================
 // Types and Interfaces
@@ -82,6 +83,235 @@ interface GitChanges {
 
 interface LLMResponse {
   content: string;
+}
+
+// ============================================================================
+// Interactive Prompts
+// ============================================================================
+
+class InteractivePrompt {
+  /**
+   * Prompt user for input
+   */
+  static async prompt(question: string): Promise<string> {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    return new Promise((resolve) => {
+      rl.question(question, (answer) => {
+        rl.close();
+        resolve(answer.trim());
+      });
+    });
+  }
+
+  /**
+   * Prompt user to select a provider
+   */
+  static async selectProvider(): Promise<Provider> {
+    console.log('\n🤖 Welcome to git-ai-commit!\n');
+    console.log('Please select your preferred LLM provider:\n');
+    console.log('  1. OpenAI (GPT-4)');
+    console.log('  2. Anthropic (Claude)');
+    console.log('  3. Google Gemini\n');
+
+    const choice = await this.prompt('Enter your choice (1-3): ');
+
+    switch (choice) {
+      case '1':
+        return 'openai';
+      case '2':
+        return 'anthropic';
+      case '3':
+        return 'gemini';
+      default:
+        console.log('Invalid choice. Defaulting to OpenAI.');
+        return 'openai';
+    }
+  }
+
+  /**
+   * Prompt user for API key
+   */
+  static async promptForApiKey(provider: Provider): Promise<string> {
+    const providerNames = {
+      openai: 'OpenAI',
+      anthropic: 'Anthropic',
+      gemini: 'Google Gemini',
+    };
+
+    const urls = {
+      openai: 'https://platform.openai.com/api-keys',
+      anthropic: 'https://console.anthropic.com/',
+      gemini: 'https://makersuite.google.com/app/apikey',
+    };
+
+    console.log(`\n🔑 ${providerNames[provider]} API key not found.\n`);
+    console.log(`Get your API key from: ${urls[provider]}\n`);
+
+    const apiKey = await this.prompt(`Enter your ${providerNames[provider]} API key: `);
+    return apiKey;
+  }
+}
+
+// ============================================================================
+// API Key Management
+// ============================================================================
+
+class ApiKeyManager {
+  /**
+   * Get the environment variable name for a provider
+   */
+  private static getEnvVarName(provider: Provider): string {
+    switch (provider) {
+      case 'openai':
+        return 'OPENAI_API_KEY';
+      case 'anthropic':
+        return 'ANTHROPIC_API_KEY';
+      case 'gemini':
+        return 'GEMINI_API_KEY';
+    }
+  }
+
+  /**
+   * Check if API key is set for a provider
+   */
+  static isApiKeySet(provider: Provider): boolean {
+    const envVar = this.getEnvVarName(provider);
+    const key = process.env[envVar];
+    return key !== undefined && key.length > 0;
+  }
+
+  /**
+   * Validate API key format for a provider
+   */
+  static validateApiKey(provider: Provider, apiKey: string): { valid: boolean; error?: string } {
+    if (!apiKey || apiKey.trim().length === 0) {
+      return { valid: false, error: 'API key cannot be empty' };
+    }
+
+    const trimmedKey = apiKey.trim();
+
+    switch (provider) {
+      case 'openai':
+        if (!trimmedKey.startsWith('sk-')) {
+          return { valid: false, error: 'OpenAI API keys should start with "sk-"' };
+        }
+        if (trimmedKey.length < 20) {
+          return { valid: false, error: 'OpenAI API key seems too short' };
+        }
+        break;
+
+      case 'anthropic':
+        if (!trimmedKey.startsWith('sk-ant-')) {
+          return { valid: false, error: 'Anthropic API keys should start with "sk-ant-"' };
+        }
+        if (trimmedKey.length < 20) {
+          return { valid: false, error: 'Anthropic API key seems too short' };
+        }
+        break;
+
+      case 'gemini':
+        // Gemini keys are typically alphanumeric
+        if (!/^[A-Za-z0-9_-]+$/.test(trimmedKey)) {
+          return { valid: false, error: 'Gemini API key should only contain alphanumeric characters, underscores, and hyphens' };
+        }
+        if (trimmedKey.length < 20) {
+          return { valid: false, error: 'Gemini API key seems too short' };
+        }
+        break;
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Get shell config file path
+   */
+  private static getShellConfigPath(): string {
+    const shell = process.env.SHELL || '';
+
+    if (shell.includes('zsh')) {
+      return path.join(os.homedir(), '.zshrc');
+    } else if (shell.includes('bash')) {
+      const bashrc = path.join(os.homedir(), '.bashrc');
+      const bashProfile = path.join(os.homedir(), '.bash_profile');
+      return fs.existsSync(bashrc) ? bashrc : bashProfile;
+    }
+
+    // Default to .zshrc for macOS
+    return path.join(os.homedir(), '.zshrc');
+  }
+
+  /**
+   * Save API key to shell config
+   */
+  static saveApiKeyToShellConfig(provider: Provider, apiKey: string): void {
+    const envVar = this.getEnvVarName(provider);
+    const configPath = this.getShellConfigPath();
+    const exportLine = `export ${envVar}="${apiKey}"`;
+
+    try {
+      // Check if key already exists in config
+      const content = fs.existsSync(configPath) ? fs.readFileSync(configPath, 'utf-8') : '';
+
+      if (content.includes(`export ${envVar}=`)) {
+        console.log(`\n⚠️  ${envVar} already exists in ${configPath}`);
+        console.log('Please update it manually or remove the old entry.\n');
+        return;
+      }
+
+      // Append to config file
+      fs.appendFileSync(configPath, `\n# Added by git-ai-commit\n${exportLine}\n`);
+      console.log(`\n✓ API key saved to ${configPath}`);
+
+      // Set in current process
+      process.env[envVar] = apiKey;
+
+      console.log(`✓ API key set for current session\n`);
+      console.log(`💡 For future terminal sessions, run: source ${configPath}\n`);
+    } catch (error: any) {
+      console.error(`\n❌ Failed to save API key: ${error.message}`);
+      console.log(`\nPlease manually add this line to ${configPath}:`);
+      console.log(`  ${exportLine}\n`);
+    }
+  }
+
+  /**
+   * Interactive setup for API key
+   */
+  static async setupApiKey(provider: Provider): Promise<void> {
+    let apiKey: string;
+    let isValid = false;
+
+    // Keep prompting until we get a valid key
+    while (!isValid) {
+      apiKey = await InteractivePrompt.promptForApiKey(provider);
+
+      // Validate the key
+      const validation = this.validateApiKey(provider, apiKey);
+
+      if (validation.valid) {
+        isValid = true;
+        // Save to shell config
+        this.saveApiKeyToShellConfig(provider, apiKey.trim());
+      } else {
+        console.log(`\n❌ Invalid API key: ${validation.error}`);
+        console.log('Please try again.\n');
+      }
+    }
+  }
+
+  /**
+   * Check and setup API key if needed
+   */
+  static async ensureApiKey(provider: Provider): Promise<void> {
+    if (!this.isApiKeySet(provider)) {
+      await this.setupApiKey(provider);
+    }
+  }
 }
 
 // ============================================================================
@@ -734,10 +964,19 @@ async function main() {
       // Load config file
       const config = ConfigManager.loadConfig();
 
-      // Merge config with CLI options (CLI takes precedence)
-      const provider = options.provider || config.provider || 'openai';
-      const dryRun = options.dryRun !== undefined ? options.dryRun : (config.dryRun || false);
-      const verbose = options.verbose !== undefined ? options.verbose : (config.verbose || false);
+      // Determine provider
+      let provider: Provider;
+
+      // If no provider specified in CLI or config, prompt user
+      if (!options.provider && !config.provider) {
+        provider = await InteractivePrompt.selectProvider();
+
+        // Save as default for future use
+        ConfigManager.saveGlobalConfig({ provider });
+        console.log(`\n✓ Set ${provider} as default provider\n`);
+      } else {
+        provider = (options.provider || config.provider || 'openai') as Provider;
+      }
 
       // Validate provider
       if (!['openai', 'anthropic', 'gemini'].includes(provider)) {
@@ -745,6 +984,13 @@ async function main() {
         console.error('Must be one of: openai, anthropic, gemini');
         process.exit(1);
       }
+
+      // Ensure API key is set (prompt if not)
+      await ApiKeyManager.ensureApiKey(provider);
+
+      // Merge other options
+      const dryRun = options.dryRun !== undefined ? options.dryRun : (config.dryRun || false);
+      const verbose = options.verbose !== undefined ? options.verbose : (config.verbose || false);
 
       const cliOptions: CLIOptions = {
         provider: provider as Provider,
@@ -807,11 +1053,6 @@ async function main() {
     });
 
   program.parse(process.argv);
-
-  // If no command provided, show help
-  if (!process.argv.slice(2).length) {
-    program.help();
-  }
 }
 
 // Run the CLI
